@@ -1,0 +1,61 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Game {
+  id                String   @id
+  title             String
+  totalBindFee      Int
+  settlementAmount  Int
+  buyins            BuyIn[]
+}
+
+model BuyIn {
+  id                String   @id @default(uuid())
+  gameId            String
+  userId            Int
+  settlementAmount  Int
+  createdAt         DateTime @default(now())
+  game              Game     @relation(fields: [gameId], references: [id])
+  user              User     @relation(fields: [userId], references: [id])
+  isEnded           Boolean  @default(false)
+  items             BuyinItem[]
+}
+
+model BuyinItem {
+  id                String   @id @default(uuid())
+  bindingCount      Int      @default(0) // Changed from bindCount for clarity
+  bindingFee        Int      @default(0) // Changed from bindFee for clarity
+  createdAt         DateTime @default(now())
+  buyInId           String
+  buyIn             BuyIn    @relation(fields: [buyInId], references: [id])
+}
+
+model User {
+  id                Int      @id @default(autoincrement())
+  createdAt         DateTime @default(now())
+  name              String
+  password          String
+  buyins            BuyIn[]
+  posts             Post[]   // Added to define the one-to-many relationship
+}
+
+model Post {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  published Boolean  @default(false)
+  title     String   @db.VarChar(255)
+  author    User?    @relation(fields: [authorId], references: [id])
+  authorId  Int?     // Added to reference the User
+}
+
+enum Role {
+  USER
+  ADMIN
+}
